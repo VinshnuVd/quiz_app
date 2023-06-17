@@ -4,23 +4,14 @@ from django.conf import settings
 from users.models import User
 
 
-class PortalAuthentication(authentication.BaseAuthentication):
+class QuizAuthentication(authentication.BaseAuthentication):
 
     ## To fetch the bearer Token
     def get_jwt_token(self, request):
-        auth = authentication.get_authorization_header(
-            request).split()
-
-        if not auth or auth[0].lower() != b'bearer':
-            msg = ('Invalid auth header. No credentials provided.')
-            raise exceptions.AuthenticationFailed(msg)
+        print(request.headers)
+        auth=request.headers.get('Authorization').split(' ')
+        print(auth)
         
-        if len(auth) == 1:
-            msg = ('Invalid auth header. No credentials provided.')
-            raise exceptions.AuthenticationFailed(msg)
-        elif len(auth) > 2:
-            msg = ('Invalid auth header. No credentials provided.')
-            raise exceptions.AuthenticationFailed(msg)
         return auth[1]
 
     def validate_jwt(self, token):
@@ -31,10 +22,7 @@ class PortalAuthentication(authentication.BaseAuthentication):
                 algorithms=['HS256'],
                 )
             return decoded_jwt
-        except jwt.exceptions.InvalidAudienceError:
-            msg = ('Invalid audience')
-        except jwt.exceptions.InvalidIssuerError:
-            msg = ('Invalid issuer')
+        
         except jwt.exceptions.ExpiredSignatureError:
             msg = ('Expired signature')
         except jwt.exceptions.ImmatureSignatureError:
@@ -56,9 +44,9 @@ class PortalAuthentication(authentication.BaseAuthentication):
 
         try:
             user=User.objects.get(uid=uid)
-        except:
+        except User.DoesNotExist:
             print("User Does Not Exists")
             raise exceptions.AuthenticationFailed("User Does Not Exists")
         
         request.user=user
-        return user
+        return (user,None)

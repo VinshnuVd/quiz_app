@@ -22,5 +22,6 @@ from django.urls import path ,include
 urlpatterns = [
     path('admin/', admin.site.urls),
     # path('func/', Login.as_view()),
-    path("quizz/",include("users.urls")),
+    path("user/",include("users.urls")),
+    path('quizz/',include('quiz.urls')),
 ]
