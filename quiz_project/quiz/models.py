@@ -46,10 +46,10 @@ class UserAttempts(models.Model):
         unique_together=('user','quiz')
         db_table='userattempts'
 
-class UserResponses(models.Model):
-    user=models.ForeignKey(User,on_delete=models.CASCADE,related_name='rensponse_provided_by')
-    question=models.ForeignKey(Questions,on_delete=models.CASCADE,related_name='user_attempted_question')
-    selected_option=models.ForeignKey(Options,on_delete=models.DO_NOTHING)
+# class UserResponses(models.Model):
+#     user=models.ForeignKey(User,on_delete=models.CASCADE,related_name='rensponse_provided_by')
+#     question=models.ForeignKey(Questions,on_delete=models.CASCADE,related_name='user_attempted_question')
+#     selected_option=models.ForeignKey(Options,on_delete=models.DO_NOTHING)
 
-    class Meta:
-        db_table='useresponses'
+#     class Meta:
+#         db_table='useresponses'

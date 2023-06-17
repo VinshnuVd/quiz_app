@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Quiz,Questions,Options
+from .models import Quiz,Questions,Options,UserAttempts
 from quiz_project.authentication import QuizAuthentication
 from django.db import transaction
 
@@ -28,18 +28,23 @@ class QuizList(APIView):
 
     def post(self,request):
         try:
-            payload={
-                        'title':request.data.get('title'),
-                        'description':request.data.get('description'),
-                        'instructor_id':request.user.uid
-                    }
-            
-            Quiz.objects.create(**payload)
+            if request.user.usertype=='INSTRUCTOR':
+                payload={
+                            'title':request.data.get('title'),
+                            'description':request.data.get('description'),
+                            'instructor_id':request.user.uid
+                        }
+                
+                Quiz.objects.create(**payload)
 
-            return Response({
-                'status':200,
-                'data':'Success fully added quiz..'
-            },status=status.HTTP_200_OK)
+                return Response({
+                    'status':200,
+                    'data':'Success fully added quiz..'
+                },status=status.HTTP_200_OK)
+            else:
+                return Response({"msg":"Invalid action","status":400},status=status.HTTP_400_BAD_REQUEST)
+
+            
         except Exception as e:
             print(e)
             return Response({'status':500,'data':'Internal server occured'},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -152,3 +157,59 @@ class QuestionAPI(APIView):
         except Exception as e:
             print(e)
             return Response({'status':500,'data':'Internal server occured'},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class UserResponse(APIView):
+    authentication_classes=[QuizAuthentication]
+
+    def post(self,request):
+        try:
+            correct_cnt=0
+            attempts=0
+            total=len(request.data.get("data"))
+            print(request.user.usertype)
+            if request.user.usertype=='NORMAL':
+                print('rfg')
+                quiz_id=request.data.get("quiz_id")
+                quiz_q=Quiz.objects.filter(id=quiz_id)
+                print(quiz_q)
+                if quiz_q.exists():
+                    print(11)
+                    attmt_que= UserAttempts.objects.filter(user_id=request.user.uid,quiz_id=quiz_id)
+                    if attmt_que.exists():
+                        print(12)
+
+                        atmt_obj=attmt_que.first()
+                        atmt_obj.user_attempts+=1
+                        atmt_obj.save()
+                    else:
+                        print(3311)
+
+                        atmt_obj=UserAttempts.objects.create(user_id=request.user.uid,quiz_id=quiz_id,user_attempts=1)
+
+                    for q_a in request.data.get("data"):
+                       print(67678)
+                       que= Questions.objects.get(id=q_a["q_id"])
+                       if que.answer_id == q_a["op_id"]:
+                           correct_cnt+=1
+                    final_data={
+                        'no_of_attempts':atmt_obj.user_attempts,
+                        'correct_responses':correct_cnt,
+                        'wrong_responses':total-correct_cnt
+                    }
+
+            
+                    return Response({"data":final_data,"status":200},status=status.HTTP_200_OK)
+                
+            print('kjbnj')
+            return Response({"msg":"Invalid action","status":400},status=status.HTTP_400_BAD_REQUEST)
+
+
+
+                    
+
+                       
+
+        except Exception as e:
+            print(e)
+            return Response({'status':500,'data':'Internal server occured'},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
